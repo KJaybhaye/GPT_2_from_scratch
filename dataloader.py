@@ -42,8 +42,8 @@ class DistributedDataloader: # for text file
 
 def load_tokens(filename):
     npt = np.load(filename)
-    if npt.shape[0] > 5000000:
-      npt = npt[:5000000]
+    if npt.shape[0] > 3000000:
+      npt = npt[:3000000]
     npt = npt.astype(np.int32) # added after video
     ptt = torch.tensor(npt, dtype=torch.long)
     return ptt
@@ -74,7 +74,7 @@ class FinewebDataloader:
     # self.reset()
 
     data = [np.load(f, mmap_mode='r') for f in shards]
-    self.n_tokens = sum([min(d.shape[0], 5000000) for d in data])
+    self.n_tokens = sum([min(d.shape[0], 3000000) for d in data])
     self.num_batches = self.n_tokens // (batch_size * seq_length)
 
     if master_process:
