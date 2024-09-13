@@ -47,14 +47,20 @@ if master_process:
     print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
 
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-data_dir = "fineweb_edu"
-train_loader = FinewebDataloader(tokenizer, B, T, data_root = data_dir, process_rank=ddp_rank, 
-                                 num_processes=ddp_world_size, split='train', master_process=master_process)
-val_loader = FinewebDataloader(tokenizer, B, T, data_root = data_dir, process_rank=ddp_rank, 
-                               num_processes=ddp_world_size, split='val', master_process=master_process)
+# data_dir = "fineweb_edu"
+
+train_dir = "/kaggle/input/fineweb-edu-10bt-for-gpt2/train"
+val_dir = "/kaggle/input/fineweb-edu-10bt-for-gpt2/test"
 
 # train_loader = FinewebDataloader(tokenizer, B, T, data_root = data_dir, process_rank=ddp_rank, 
+#                                  num_processes=ddp_world_size, split='train', master_process=master_process)
+# val_loader = FinewebDataloader(tokenizer, B, T, data_root = data_dir, process_rank=ddp_rank, 
 #                                num_processes=ddp_world_size, split='val', master_process=master_process)
+
+train_loader = FinewebDataloader(tokenizer, B, T, data_root = train_dir, process_rank=ddp_rank, 
+                                 num_processes=ddp_world_size, separate_val=True, split='train', master_process=master_process)
+val_loader = FinewebDataloader(tokenizer, B, T, data_root = val_dir, process_rank=ddp_rank, 
+                               num_processes=ddp_world_size, separate_val=True, split='val', master_process=master_process)
 
 
 max_lr = 6e-4
@@ -126,7 +132,7 @@ def dist_eval_step(model, optimizer, val_loader, device, step, log_file, log_dir
         with open(log_file, "a") as f:
             f.write(f"{step} val {val_loss_accum.item():.4f}\n")
             
-        if step > 0 and (step % 5000 == 0 or last_step):
+        if step > 0 and (step % 10000 == 0 or last_step):
             checkpoint_path = os.path.join(log_dir, f"model_{step:05d}.pt")
             if ddp:
                 st_dict = model.module.state_dict()
