@@ -69,16 +69,16 @@ class FinewebDataloader:
     self.current_shard = 0
     self.tokens = load_tokens(self.shards[self.current_shard])
     assert len(shards) > 0, f"no shards found for split {split}"
-    if master_process:
-        print(f"found {len(shards)} shards for split {split}")
     # self.reset()
 
     data = [np.load(f, mmap_mode='r') for f in shards]
     self.n_tokens = sum([d.shape[0] for d in data])
     self.num_batches = self.n_tokens // (batch_size * seq_length)
 
-    print("Number of tokens: ", self.n_tokens)
-    print("Number of Batches: ", self.num_batches)
+    if master_process:
+        print(f"found {len(shards)} shards for split {split}")
+        print("Number of tokens: ", self.n_tokens)
+        print("Number of Batches: ", self.num_batches)
 
   def __iter__(self):
     return self
