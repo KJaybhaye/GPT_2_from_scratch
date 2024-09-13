@@ -132,7 +132,7 @@ def dist_eval_step(model, optimizer, val_loader, device, step, log_file, log_dir
         with open(log_file, "a") as f:
             f.write(f"{step} val {val_loss_accum.item():.4f}\n")
             
-        if step > 0 and (step % 10000 == 0 or last_step):
+        if step > 0 and (step % 250 == 0 or last_step):
             checkpoint_path = os.path.join(log_dir, f"model_{step:05d}.pt")
             if ddp:
                 st_dict = model.module.state_dict()
