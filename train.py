@@ -38,7 +38,7 @@ device_type = "cuda" if device.startswith("cuda") else "cpu"
 
 
 total_batch_size = 64 * 1024 # in number of tokens
-B = 4
+B = 8
 T = 1024
 assert total_batch_size % (B * T * ddp_world_size) == 0, "make sure total_batch_size is divisible by B * T * ddp_world_size"
 grad_accum_steps = total_batch_size // (B * T * ddp_world_size)
@@ -69,6 +69,8 @@ warmup_steps = 100 #715
 max_steps = train_loader.num_batches // (grad_accum_steps * ddp_world_size )
 use_compile = False
 
+if master_process:
+    print(f"total steps: {max_steps}")
 torch.cuda.empty_cache()
 model = GPT(GPTConfig(vocab_size=50304))
 model.to(device)
