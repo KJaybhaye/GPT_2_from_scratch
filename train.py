@@ -177,7 +177,7 @@ for step in range(max_steps):
         dist_eval_step(model, optimizer, val_iter, device, step, log_file, log_dir, last_step)
 
     if ((step > 0 and step % 250 == 0) or last_step) and (not use_compile) and master_process:
-        samples = sample("Tell me about nuclear energy,", model, tokenizer, num_return_sequences=1, max_length=50)
+        samples = sample("Tell me about nuclear energy,", model, tokenizer, device_type, num_return_sequences=1, max_length=50)
         for sam in samples:
               print(sam)
 
