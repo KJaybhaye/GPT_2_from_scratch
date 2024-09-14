@@ -142,13 +142,14 @@ def dist_eval_step(model, optimizer, val_loader, device, step, log_file, log_dir
             else:
                 st_dict = model.state_dict()
                 config = model.config
-            checkpoint = {
-                'model': st_dict,
-                'config': config,
-                'step': step,
-                'val_loss': val_loss_accum.item()
-            }
-            torch.save(checkpoint, checkpoint_path)
+            # checkpoint = {
+            #     'model': st_dict,
+            #     'config': config,
+            #     'step': step,
+            #     'val_loss': val_loss_accum.item(),
+            #     'optimizer': optimizer.state_dict()
+            # }
+            torch.save(st_dict, checkpoint_path)
 
 def get_lr(it): # cosine schedular
   if it < warmup_steps:
