@@ -10,6 +10,22 @@ import time
 from utils import *
 from gpt import *
 from dataloader import FinewebDataloader
+import argparse
+
+# adding command line arguments for resuming training
+argp = argparse.ArgumentParser(description='arguments for training')
+argp.add_argument( "--weights", type=str, 
+                  help= "path to .pt file to initialize weights")
+num_args = {
+    "--step": "start step",
+    "--total": "total steps (training runs for total - start steps)",
+    "--val_steps": "run validation after val_steps",
+    "--check": "save model after this many steps"
+    }
+for k, v in num_args.items():
+    argp.add_argument(k, type=int, required=False, help=v)
+args = argp.parse_args()._get_kwargs()
+args = {k:v for (k,v) in args}
 
 ddp = int(os.environ.get('RANK', -1)) != -1 # is this a ddp run?
 if ddp:
@@ -38,7 +54,7 @@ device_type = "cuda" if device.startswith("cuda") else "cpu"
 
 
 total_batch_size = 64 * 1024 # in number of tokens
-B = 4
+B = 8
 T = 1024
 assert total_batch_size % (B * T * ddp_world_size) == 0, "make sure total_batch_size is divisible by B * T * ddp_world_size"
 grad_accum_steps = total_batch_size // (B * T * ddp_world_size)
@@ -66,16 +82,24 @@ val_loader = FinewebDataloader(tokenizer, B, T, data_root = val_dir, process_ran
 max_lr = 6e-4
 min_lr = max_lr * 0.1
 warmup_steps = 100 #715
-max_steps = train_loader.num_batches // (grad_accum_steps * ddp_world_size )
+max_steps = args["total"] if args["total"] else train_loader.num_batches // (grad_accum_steps * ddp_world_size )
 use_compile = False
 
+if master_process:
+    print(f"total steps: {max_steps}")
 torch.cuda.empty_cache()
 model = GPT(GPTConfig(vocab_size=50304))
+
+if args["weights"]:
+    model.load_state_dict(torch.load(args["weights"]))
 model.to(device)
 if ddp:
     model = DDP(model, device_ids=[ddp_local_rank])
 
 optimizer = get_optimizer(model, max_lr, 0.1)
+
+check_steps = args["check"] if args["check"] else 250
+val_steps = args["val_steps"] if args["val_steps"] else 100
 
 def dist_train_step(model, optimizer, train_loader, grad_accum_steps, device, step, log_file):
     t0 = time.time()
@@ -132,7 +156,7 @@ def dist_eval_step(model, optimizer, val_loader, device, step, log_file, log_dir
         with open(log_file, "a") as f:
             f.write(f"{step} val {val_loss_accum.item():.4f}\n")
             
-        if step > 0 and (step % 10000 == 0 or last_step):
+        if step > 0 and (step % check_steps == 0 or last_step):
             checkpoint_path = os.path.join(log_dir, f"model_{step:05d}.pt")
             if ddp:
                 st_dict = model.module.state_dict()
@@ -140,13 +164,14 @@ def dist_eval_step(model, optimizer, val_loader, device, step, log_file, log_dir
             else:
                 st_dict = model.state_dict()
                 config = model.config
-            checkpoint = {
-                'model': st_dict,
-                'config': config,
-                'step': step,
-                'val_loss': val_loss_accum.item()
-            }
-            torch.save(checkpoint, checkpoint_path)
+            # checkpoint = {
+            #     'model': st_dict,
+            #     'config': config,
+            #     'step': step,
+            #     'val_loss': val_loss_accum.item(),
+            #     'optimizer': optimizer.state_dict()
+            # }
+            torch.save(st_dict, checkpoint_path)
 
 def get_lr(it): # cosine schedular
   if it < warmup_steps:
@@ -168,13 +193,14 @@ with open(log_file, "w") as f:
 train_iter = iter(train_loader)
 val_iter = iter(val_loader)
 
-for step in range(max_steps):
+start_step = args["step"] if args["step"] else 0
+for step in range(start_step, max_steps):
     last_step = (step == max_steps - 1)
-    if step % 100 == 0 or last_step:
+    if step % val_steps == 0 or last_step:
         dist_eval_step(model, optimizer, val_iter, device, step, log_file, log_dir, last_step)
 
     if ((step > 0 and step % 250 == 0) or last_step) and (not use_compile) and master_process:
-        samples = sample("Tell me about nuclear energy,", model, tokenizer, num_return_sequences=1, max_length=50)
+        samples = sample("Tell me about nuclear energy,", model, tokenizer, device_type, num_return_sequences=1, max_length=50)
         for sam in samples:
               print(sam)
 
