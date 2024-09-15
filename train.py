@@ -12,6 +12,7 @@ from gpt import *
 from dataloader import FinewebDataloader
 import argparse
 
+# adding command line arguments for resuming training
 argp = argparse.ArgumentParser(description='arguments for training')
 argp.add_argument( "--weights", type=str, 
                   help= "path to .pt file to initialize weights")
