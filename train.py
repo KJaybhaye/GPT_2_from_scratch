@@ -13,15 +13,16 @@ from dataloader import FinewebDataloader
 import argparse
 
 argp = argparse.ArgumentParser(description='arguments for training')
-args_dict = {
-    "--weights": "path to .pt file to initialize weights",
+argp.add_argument( "--weights", type=str, 
+                  help= "path to .pt file to initialize weights")
+num_args = {
     "--step": "start step",
     "--total": "total steps (training runs for total - start steps)",
     "--val_steps": "run validation after val_steps",
     "--check": "save model after this many steps"
     }
-for k, v in args_dict.items():
-    argp.add_argument(k, type=str, required=False, help=v)
+for k, v in num_args.items():
+    argp.add_argument(k, type=int, required=False, help=v)
 args = argp.parse_args()._get_kwargs()
 args = {k:v for (k,v) in args}
 
