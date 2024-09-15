@@ -2,7 +2,7 @@ import inspect
 import torch
 import torch.nn.functional as F
 
-def sample(input_string, model, tokenizer, num_return_sequences=1, max_length=200, device='cpu'):
+def sample(input_string, model, tokenizer, device, num_return_sequences=1, max_length=200):
   tokens = tokenizer.encode(input_string)
   tokens = torch.tensor(tokens, dtype=torch.long)
   tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
