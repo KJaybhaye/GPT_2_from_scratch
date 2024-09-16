@@ -16,6 +16,8 @@ import argparse
 argp = argparse.ArgumentParser(description='arguments for training')
 argp.add_argument( "--weights", type=str, 
                   help= "path to .pt file to initialize weights")
+argp.add_argument( "--type", type=str, 
+                  help= "model type (small for smaller type)")
 num_args = {
     "--step": "start step",
     "--total": "total steps (training runs for total - start steps)",
@@ -88,7 +90,13 @@ use_compile = False
 if master_process:
     print(f"total steps: {max_steps}")
 torch.cuda.empty_cache()
-model = GPT(GPTConfig(vocab_size=50304))
+
+if args["type"] == "small":
+    config = GPTConfig(vocab_size=50304, block_size=256, n_layer=6, 
+                       n_head=6, n_embd=384)
+else:
+    config = GPTConfig(vocab_size=50304)
+model = GPT(config)
 
 if args["weights"]:
     model.load_state_dict(torch.load(args["weights"]))
