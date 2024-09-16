@@ -75,7 +75,7 @@ class FinewebDataloader:
     # self.reset()
     data = [np.load(f, mmap_mode='r') for f in shards]
     if max_tokens_per_shard:
-      self.tokens = load_tokens(self.shards[self.current_shard, max_tokens_per_shard])
+      self.tokens = load_tokens(self.shards[self.current_shard], max_tokens_per_shard)
       self.n_tokens = sum([min(d.shape[0], max_tokens_per_shard) for d in data])
     else:
       self.tokens = load_tokens(self.shards[self.current_shard])
