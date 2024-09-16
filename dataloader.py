@@ -40,17 +40,19 @@ class DistributedDataloader: # for text file
 
     return x, y
 
-def load_tokens(filename):
+def load_tokens(filename, max_tokens=None):
     npt = np.load(filename)
-    if npt.shape[0] > 5000000:
-      npt = npt[:5000000]
+    if max_tokens:
+      if npt.shape[0] > max_tokens:
+        npt = npt[:max_tokens]
     npt = npt.astype(np.int32) # added after video
     ptt = torch.tensor(npt, dtype=torch.long)
     return ptt
 
 class FinewebDataloader:
   def __init__(self, tokenizer, batch_size, seq_length, data_root = "edu_fineweb10B", process_rank = 0, 
-               num_processes = 1, separate_val = False, split='train', master_process=True):
+               num_processes = 1, separate_val = False, split='train', master_process=True,
+               max_tokens_per_shard=None):
     self.batch_size = batch_size
     self.seq_length = seq_length
 
@@ -69,12 +71,15 @@ class FinewebDataloader:
 
     self.shards = shards
     self.current_shard = 0
-    self.tokens = load_tokens(self.shards[self.current_shard])
     assert len(shards) > 0, f"no shards found for split {split}"
     # self.reset()
-
     data = [np.load(f, mmap_mode='r') for f in shards]
-    self.n_tokens = sum([min(d.shape[0], 5000000) for d in data])
+    if max_tokens_per_shard:
+      self.tokens = load_tokens(self.shards[self.current_shard, max_tokens_per_shard])
+      self.n_tokens = sum([min(d.shape[0], max_tokens_per_shard) for d in data])
+    else:
+      self.tokens = load_tokens(self.shards[self.current_shard])
+      self.n_tokens = sum([d.shape[0] for d in data])
     self.num_batches = self.n_tokens // (batch_size * seq_length)
 
     if master_process:

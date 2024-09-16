@@ -22,7 +22,8 @@ num_args = {
     "--step": "start step",
     "--total": "total steps (training runs for total - start steps)",
     "--val_steps": "run validation after val_steps",
-    "--check": "save model after this many steps"
+    "--check": "save model after this many steps",
+    "--shard_length": "Maximum tokens per shard"
     }
 for k, v in num_args.items():
     argp.add_argument(k, type=int, required=False, help=v)
@@ -54,8 +55,6 @@ else:
 print(f"ddp: {ddp}")
 device_type = "cuda" if device.startswith("cuda") else "cpu"
 
-
-
 B = 8
 T = 256 if args["type"] == "small" else 1024
 total_batch_size = 64 * T # in number of tokens
@@ -77,9 +76,11 @@ val_dir = "/kaggle/input/fineweb-edu-10bt-for-gpt2/test"
 #                                num_processes=ddp_world_size, split='val', master_process=master_process)
 
 train_loader = FinewebDataloader(tokenizer, B, T, data_root = train_dir, process_rank=ddp_rank, 
-                                 num_processes=ddp_world_size, separate_val=True, split='train', master_process=master_process)
+                                 num_processes=ddp_world_size, separate_val=True, split='train', 
+                                 master_process=master_process, max_tokens_per_shard=args["shard_length"])
 val_loader = FinewebDataloader(tokenizer, B, T, data_root = val_dir, process_rank=ddp_rank, 
-                               num_processes=ddp_world_size, separate_val=True, split='val', master_process=master_process)
+                               num_processes=ddp_world_size, separate_val=True, split='val', 
+                               master_process=master_process, max_tokens_per_shard=args["shard_length"])
 
 
 max_lr = 1e-3
