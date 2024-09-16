@@ -82,7 +82,7 @@ val_loader = FinewebDataloader(tokenizer, B, T, data_root = val_dir, process_ran
                                num_processes=ddp_world_size, separate_val=True, split='val', master_process=master_process)
 
 
-max_lr = 6e-4
+max_lr = 1e-3
 min_lr = max_lr * 0.1
 warmup_steps = 100 #715
 max_steps = args["total"] if args["total"] else train_loader.num_batches // (grad_accum_steps * ddp_world_size )
