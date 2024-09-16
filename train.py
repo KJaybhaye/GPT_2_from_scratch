@@ -55,9 +55,10 @@ print(f"ddp: {ddp}")
 device_type = "cuda" if device.startswith("cuda") else "cpu"
 
 
-total_batch_size = 64 * 1024 # in number of tokens
+
 B = 8
-T = 1024
+T = 256 if args["type"] == "small" else 1024
+total_batch_size = 64 * T # in number of tokens
 assert total_batch_size % (B * T * ddp_world_size) == 0, "make sure total_batch_size is divisible by B * T * ddp_world_size"
 grad_accum_steps = total_batch_size // (B * T * ddp_world_size)
 if master_process:
