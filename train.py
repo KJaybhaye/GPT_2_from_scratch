@@ -65,20 +65,20 @@ if master_process:
     print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
 
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-# data_dir = "fineweb_edu"
+data_dir = "fineweb_edu"
 
-train_dir = "/kaggle/input/fineweb-edu-10bt-for-gpt2/train"
-val_dir = "/kaggle/input/fineweb-edu-10bt-for-gpt2/test"
+# train_dir = "/kaggle/input/fineweb-edu-10bt-for-gpt2/train"
+# val_dir = "/kaggle/input/fineweb-edu-10bt-for-gpt2/test"
 
-# train_loader = FinewebDataloader(tokenizer, B, T, data_root = data_dir, process_rank=ddp_rank, 
-#                                  num_processes=ddp_world_size, split='train', master_process=master_process)
-# val_loader = FinewebDataloader(tokenizer, B, T, data_root = data_dir, process_rank=ddp_rank, 
-#                                num_processes=ddp_world_size, split='val', master_process=master_process)
+train_loader = FinewebDataloader(tokenizer, B, T, data_root = data_dir, process_rank=ddp_rank, 
+                                 num_processes=ddp_world_size, split='train', master_process=master_process)
+val_loader = FinewebDataloader(tokenizer, B, T, data_root = data_dir, process_rank=ddp_rank, 
+                               num_processes=ddp_world_size, split='val', master_process=master_process)
 
-train_loader = FinewebDataloader(tokenizer, B, T, data_root = train_dir, process_rank=ddp_rank, 
-                                 num_processes=ddp_world_size, separate_val=True, split='train', master_process=master_process)
-val_loader = FinewebDataloader(tokenizer, B, T, data_root = val_dir, process_rank=ddp_rank, 
-                               num_processes=ddp_world_size, separate_val=True, split='val', master_process=master_process)
+# train_loader = FinewebDataloader(tokenizer, B, T, data_root = train_dir, process_rank=ddp_rank, 
+#                                  num_processes=ddp_world_size, separate_val=True, split='train', master_process=master_process)
+# val_loader = FinewebDataloader(tokenizer, B, T, data_root = val_dir, process_rank=ddp_rank, 
+#                                num_processes=ddp_world_size, separate_val=True, split='val', master_process=master_process)
 
 
 max_lr = 6e-4
