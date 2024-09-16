@@ -93,7 +93,7 @@ torch.cuda.empty_cache()
 
 if args["type"] == "small":
     config = GPTConfig(vocab_size=50304, block_size=256, n_layer=6, 
-                       n_head=6, n_embd=385)
+                       n_head=6, n_embd=384)
 else:
     config = GPTConfig(vocab_size=50304)
 model = GPT(config)
